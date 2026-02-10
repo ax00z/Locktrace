@@ -5,30 +5,17 @@
   to { transform: rotate(360deg); }
 }
 
-/* Custom scrollbar */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
 }
 
-::-webkit-scrollbar-track {
-  background: #1e293b;
-}
+.theme-dark ::-webkit-scrollbar-track { background: #0a1628; }
+.theme-dark ::-webkit-scrollbar-thumb { background: #1e3a5f; border-radius: 3px; }
+.theme-dark ::-webkit-scrollbar-thumb:hover { background: #2d5a8a; }
 
-::-webkit-scrollbar-thumb {
-  background: #475569;
-  border-radius: 3px;
-}
+.theme-light ::-webkit-scrollbar-track { background: #e8eef6; }
+.theme-light ::-webkit-scrollbar-thumb { background: #b0c4de; border-radius: 3px; }
+.theme-light ::-webkit-scrollbar-thumb:hover { background: #8aa8c8; }
 
-::-webkit-scrollbar-thumb:hover {
-  background: #64748b;
-}
-
-/* Smooth scroll */
-html {
-  scroll-behavior: smooth;
-}
-
-body {
-  background-color: #020617;
-}
+html { scroll-behavior: smooth; }

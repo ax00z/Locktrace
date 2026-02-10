@@ -1,6 +1,13 @@
 import { create } from 'zustand';
 import type { TheftRecord, ViewMode, TheftFilter } from '../types';
 
+type Theme = 'dark' | 'light';
+
+function getSystemTheme(): Theme {
+  if (typeof window === 'undefined') return 'dark';
+  return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+}
+
 interface AppState {
   records: TheftRecord[];
   loading: boolean;
@@ -10,6 +17,7 @@ interface AppState {
   selectedRecord: TheftRecord | null;
   dataSource: 'static' | 'live' | null;
   lastUpdated: string | null;
+  theme: Theme;
 
   setRecords: (records: TheftRecord[]) => void;
   setLoading: (loading: boolean) => void;
@@ -19,7 +27,7 @@ interface AppState {
   setSelectedRecord: (record: TheftRecord | null) => void;
   setDataSource: (source: 'static' | 'live') => void;
   setLastUpdated: (date: string) => void;
-
+  toggleTheme: () => void;
   filteredRecords: () => TheftRecord[];
 }
 
@@ -32,6 +40,7 @@ export const useStore = create<AppState>((set, get) => ({
   selectedRecord: null,
   dataSource: null,
   lastUpdated: null,
+  theme: getSystemTheme(),
 
   setRecords: (records) => set({ records }),
   setLoading: (loading) => set({ loading }),
@@ -41,6 +50,7 @@ export const useStore = create<AppState>((set, get) => ({
   setSelectedRecord: (selectedRecord) => set({ selectedRecord }),
   setDataSource: (dataSource) => set({ dataSource }),
   setLastUpdated: (lastUpdated) => set({ lastUpdated }),
+  toggleTheme: () => set((s) => ({ theme: s.theme === 'dark' ? 'light' : 'dark' })),
 
   filteredRecords: () => {
     const { records, filter } = get();

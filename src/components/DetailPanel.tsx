@@ -2,60 +2,46 @@ import { useStore } from '../store/useStore';
 import { X, Car, Bike, MapPin, Clock, Building2, Shield } from 'lucide-react';
 
 export function DetailPanel() {
-  const { selectedRecord, setSelectedRecord } = useStore();
-
+  const { selectedRecord, setSelectedRecord, theme } = useStore();
   if (!selectedRecord) return null;
 
+  const dark = theme === 'dark';
   const isAuto = selectedRecord.type === 'auto';
+  const accent = isAuto ? '#ff6450' : '#3cb4f0';
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm" onClick={() => setSelectedRecord(null)}>
-      <div
-        className="bg-slate-900 border border-slate-700/50 rounded-2xl shadow-2xl w-full max-w-sm mx-4 overflow-hidden"
-        onClick={(e) => e.stopPropagation()}
-      >
-        {/* Header */}
-        <div className={`px-5 py-4 bg-gradient-to-r ${isAuto ? 'from-red-500/20 to-orange-500/20' : 'from-blue-500/20 to-cyan-500/20'} border-b border-slate-700/30`}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm" onClick={() => setSelectedRecord(null)}>
+      <div className={`border rounded-2xl shadow-2xl w-full max-w-sm mx-4 overflow-hidden ${dark ? 'bg-[#0a1628] border-[#1e508c]' : 'bg-white border-[#d0daea]'}`} onClick={(e) => e.stopPropagation()}>
+        <div className={`px-5 py-4 border-b ${dark ? 'border-[#112a4a]' : 'border-[#d0daea]'}`} style={{ background: `linear-gradient(135deg, ${accent}10, ${accent}05)` }}>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className={`w-10 h-10 rounded-xl ${isAuto ? 'bg-red-500/20' : 'bg-blue-500/20'} flex items-center justify-center`}>
-                {isAuto ? <Car className="w-5 h-5 text-red-400" /> : <Bike className="w-5 h-5 text-blue-400" />}
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ backgroundColor: `${accent}15` }}>
+                {isAuto ? <Car className="w-5 h-5" style={{ color: accent }} /> : <Bike className="w-5 h-5" style={{ color: accent }} />}
               </div>
               <div>
-                <h3 className="text-white font-semibold capitalize">{selectedRecord.type} Theft</h3>
-                <p className="text-xs text-slate-400">Incident Details</p>
+                <h3 className={`font-semibold capitalize ${dark ? 'text-white' : 'text-[#0a1628]'}`}>{selectedRecord.type} Theft</h3>
               </div>
             </div>
             <button
               onClick={() => setSelectedRecord(null)}
-              className="w-8 h-8 rounded-lg bg-slate-800 flex items-center justify-center text-slate-400 hover:text-white hover:bg-slate-700 transition-colors"
+              className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors ${dark ? 'bg-[#112a4a] text-blue-300/50 hover:text-white hover:bg-[#1e508c]' : 'bg-[#e8eef6] text-[#5a7a9a] hover:text-[#0a1628] hover:bg-[#d0daea]'}`}
             >
               <X className="w-4 h-4" />
             </button>
           </div>
         </div>
 
-        {/* Details */}
         <div className="p-5 space-y-3">
-          <DetailRow icon={<MapPin className="w-4 h-4 text-red-400" />} label="Neighbourhood" value={selectedRecord.neighbourhood} />
-          <DetailRow icon={<Building2 className="w-4 h-4 text-purple-400" />} label="Premise Type" value={selectedRecord.premiseType} />
-          <DetailRow
-            icon={<Clock className="w-4 h-4 text-amber-400" />}
-            label="Date & Time"
-            value={`${selectedRecord.year}-${String(selectedRecord.month).padStart(2, '0')}-${String(selectedRecord.day).padStart(2, '0')} at ${String(selectedRecord.hour).padStart(2, '0')}:00`}
-          />
-          <DetailRow icon={<Shield className="w-4 h-4 text-green-400" />} label="Status" value={selectedRecord.status} />
-          <DetailRow
-            icon={<MapPin className="w-4 h-4 text-cyan-400" />}
-            label="Coordinates"
-            value={`${selectedRecord.lat.toFixed(5)}, ${selectedRecord.lng.toFixed(5)}`}
-          />
+          <Row icon={<MapPin className="w-4 h-4 text-[#ff6450]" />} label="Neighbourhood" value={selectedRecord.neighbourhood} dark={dark} />
+          <Row icon={<Building2 className="w-4 h-4 text-violet-400" />} label="Premise" value={selectedRecord.premiseType} dark={dark} />
+          <Row icon={<Clock className="w-4 h-4 text-teal-400" />} label="Date & Time" value={`${selectedRecord.date} at ${String(selectedRecord.hour).padStart(2, '0')}:00`} dark={dark} />
+          <Row icon={<Shield className="w-4 h-4 text-emerald-400" />} label="Status" value={selectedRecord.status} dark={dark} />
+          <Row icon={<MapPin className="w-4 h-4 text-cyan-400" />} label="Coordinates" value={`${selectedRecord.lat.toFixed(5)}, ${selectedRecord.lng.toFixed(5)}`} dark={dark} />
         </div>
 
-        {/* Footer */}
-        <div className="px-5 py-3 bg-slate-800/50 border-t border-slate-700/30">
-          <p className="text-[10px] text-slate-500 text-center">
-            ID: {selectedRecord.id} • Data from Toronto Police Service
+        <div className={`px-5 py-3 border-t ${dark ? 'border-[#112a4a]' : 'border-[#d0daea]'}`}>
+          <p className={`text-[10px] text-center ${dark ? 'text-blue-400/30' : 'text-[#8aa8c8]'}`}>
+            {selectedRecord.id}
           </p>
         </div>
       </div>
@@ -63,15 +49,13 @@ export function DetailPanel() {
   );
 }
 
-function DetailRow({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
+function Row({ icon, label, value, dark }: { icon: React.ReactNode; label: string; value: string; dark: boolean }) {
   return (
     <div className="flex items-start gap-3">
-      <div className="w-8 h-8 rounded-lg bg-slate-800 flex items-center justify-center shrink-0 mt-0.5">
-        {icon}
-      </div>
+      <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 mt-0.5 ${dark ? 'bg-[#112a4a]' : 'bg-[#e8eef6]'}`}>{icon}</div>
       <div className="min-w-0">
-        <div className="text-[10px] text-slate-500 uppercase tracking-wider">{label}</div>
-        <div className="text-sm text-white font-medium truncate">{value}</div>
+        <div className={`text-[10px] uppercase tracking-wider ${dark ? 'text-blue-400/40' : 'text-[#8aa8c8]'}`}>{label}</div>
+        <div className={`text-sm font-medium truncate ${dark ? 'text-white' : 'text-[#0a1628]'}`}>{value}</div>
       </div>
     </div>
   );

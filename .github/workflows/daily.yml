@@ -2,11 +2,10 @@ name: Daily Scrape & Deploy
 
 on:
   schedule:
-    # Run daily at 14:00 UTC (09:00 EST)
     - cron: '0 14 * * *'
   push:
     branches: [main]
-  workflow_dispatch:  # Allow manual triggering
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -25,52 +24,32 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
 
     steps:
-      - name: 📥 Checkout repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: 🐍 Set up Python 3.12
-        uses: actions/setup-python@v5
+      - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
 
-      - name: 📊 Run scraper (ETL pipeline)
+      - name: Scrape data
         run: python scrape.py
 
-      - name: ✅ Verify data files exist
+      - name: Verify output
         run: |
-          echo "=== Data files ==="
           ls -la public/data/
-          echo ""
-          echo "Auto thefts file size:"
-          wc -c public/data/auto_thefts.json
-          echo "Bike thefts file size:"
-          wc -c public/data/bike_thefts.json
-          echo ""
-          echo "Auto thefts record count:"
-          python -c "import json; d=json.load(open('public/data/auto_thefts.json')); print(len(d))"
-          echo "Bike thefts record count:"
-          python -c "import json; d=json.load(open('public/data/bike_thefts.json')); print(len(d))"
+          python -c "import json; print('Auto:', len(json.load(open('public/data/auto_thefts.json'))))"
+          python -c "import json; print('Bike:', len(json.load(open('public/data/bike_thefts.json'))))"
 
-      - name: 📦 Set up Node.js 20
-        uses: actions/setup-node@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: '20'
           cache: 'npm'
 
-      - name: 📥 Install npm dependencies
-        run: npm ci
+      - run: npm ci
+      - run: npm run build
 
-      - name: 🏗️ Build frontend
-        run: npm run build
-
-      - name: 📄 Setup Pages
-        uses: actions/configure-pages@v4
-
-      - name: 📤 Upload artifact
-        uses: actions/upload-pages-artifact@v3
+      - uses: actions/configure-pages@v4
+      - uses: actions/upload-pages-artifact@v3
         with:
           path: './dist'
-
-      - name: 🚀 Deploy to GitHub Pages
+      - uses: actions/deploy-pages@v4
         id: deployment
-        uses: actions/deploy-pages@v4
