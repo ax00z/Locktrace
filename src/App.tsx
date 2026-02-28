@@ -20,13 +20,11 @@ export function App() {
   const [testStatus, setTestStatus] = useState<'idle' | 'testing' | 'success' | 'error'>('idle');
   const [testMsg, setTestMsg] = useState('');
 
-  // Sync body class with theme for scrollbar styling
   useEffect(() => {
     document.body.className = theme === 'dark' ? 'theme-dark' : 'theme-light';
     document.body.style.backgroundColor = theme === 'dark' ? '#040d1a' : '#e8eef6';
   }, [theme]);
 
-  // Respond to system theme changes
   useEffect(() => {
     const mq = window.matchMedia('(prefers-color-scheme: dark)');
     const handler = (e: MediaQueryListEvent) => {
@@ -151,7 +149,7 @@ function StatusPanel({ dark, isDemo, autoCount, bikeCount }: { dark: boolean; is
         </div>
         <div className="flex items-center justify-between">
           <span className={`text-[10px] ${muted}`}>Window</span>
-          <span className={`text-[10px] font-mono ${secondary}`}>3 months</span>
+          <span className={`text-[10px] font-mono ${secondary}`}>6 months</span>
         </div>
       </div>
     </div>

@@ -35,11 +35,11 @@ export function Header() {
             </div>
             <div className="flex flex-col">
               <h1 className={`text-sm font-bold tracking-widest ${text}`}>
-                LOCKTRACE // TPS SPATIAL INTELLIGENCE
+                LOCKTRACE
               </h1>
               {!loading && (
                 <span className={`text-[10px] tracking-widest ${textMuted} mt-0.5`}>
-                  {records.length.toLocaleString()} RECORDS · T-90 DAYS
+                  {records.length.toLocaleString()} RECORDS · LAST 6 MONTHS
                 </span>
               )}
             </div>

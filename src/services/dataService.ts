@@ -7,9 +7,9 @@ const BIKE_THEFT_API =
 
 const PAGE_SIZE = 2000;
 
-function threeMonthsAgo(): Date {
+function cutoffDate(): Date {
   const d = new Date();
-  d.setMonth(d.getMonth() - 3);
+  d.setMonth(d.getMonth() - 6);
   d.setHours(0, 0, 0, 0);
   return d;
 }
@@ -56,7 +56,7 @@ function parseRecord(f: any, theftType: 'auto' | 'bike'): TheftRecord | null {
   const dateStr = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
 
   const recordDate = new Date(year, month - 1, day);
-  if (recordDate < threeMonthsAgo() || recordDate > now) return null;
+  if (recordDate < cutoffDate() || recordDate > now) return null;
 
   return {
     id: `${theftType}-${a.EVENT_UNIQUE_ID || a.OBJECTID || ''}`,
@@ -82,10 +82,9 @@ async function fetchPaginated(url: string, where: string): Promise<unknown[]> {
       f: 'json',
       resultRecordCount: String(PAGE_SIZE),
       resultOffset: String(offset),
-      _t: Date.now().toString() // Cache Buster
+      _t: Date.now().toString()
     });
 
-    // Force network fetch, bypass browser cache
     const resp = await fetch(`${url}?${params}`, { cache: 'no-store' });
     if (!resp.ok) throw new Error(`API returned ${resp.status}`);
     const json = await resp.json();
@@ -108,7 +107,7 @@ async function fetchWithFallback(url: string): Promise<unknown[]> {
   const year = new Date().getFullYear();
   const strategies = [
     `OCC_YEAR >= ${year - 1}`,
-    `OCC_YEAR >= ${year}`,
+    `OCC_YEAR >= ${year - 2}`,
     '1=1',
   ];
 
@@ -135,7 +134,7 @@ async function fetchStatic(path: string): Promise<TheftRecord[]> {
   const resp = await fetch(`${path}?_t=${Date.now()}`, { cache: 'no-store' });
   if (!resp.ok) throw new Error(`Not found: ${path}`);
   const data: TheftRecord[] = await resp.json();
-  const cutoff = threeMonthsAgo();
+  const cutoff = cutoffDate();
   const now = new Date();
   return data.filter((r) => {
     const d = new Date(r.year, r.month - 1, r.day);

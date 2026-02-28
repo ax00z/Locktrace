@@ -58,18 +58,15 @@ export function TheftMap() {
     const { width, height } = dims;
     const dpr = window.devicePixelRatio || 1;
     
-    // Strict pixel mapping to prevent blurring
     canvas.width = Math.floor(width * dpr);
     canvas.height = Math.floor(height * dpr);
     canvas.style.width = `${width}px`;
     canvas.style.height = `${height}px`;
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
-    // Tactical Background
     ctx.fillStyle = dark ? '#090a0c' : '#ffffff';
     ctx.fillRect(0, 0, width, height);
 
-    // Sharp Grid
     const gridColor = dark ? '#1a1d24' : '#f4f4f5';
     ctx.strokeStyle = gridColor;
     ctx.lineWidth = 1;
@@ -86,7 +83,6 @@ export function TheftMap() {
       ctx.beginPath(); ctx.moveTo(Math.floor(x) + 0.5, 0); ctx.lineTo(Math.floor(x) + 0.5, height); ctx.stroke();
     }
 
-    // Land Boundary
     const boundary = [
       [43.855, -79.639], [43.855, -79.115], [43.58, -79.115],
       [43.58, -79.26], [43.60, -79.44], [43.59, -79.50],
@@ -104,7 +100,6 @@ export function TheftMap() {
     ctx.lineWidth = 1;
     ctx.stroke();
 
-    // Lake Ontario
     const lake = [
       [43.63, -79.64], [43.60, -79.55], [43.59, -79.45],
       [43.60, -79.35], [43.58, -79.20], [43.58, -79.11],
@@ -125,7 +120,6 @@ export function TheftMap() {
     ctx.textAlign = 'center';
     ctx.fillText('LAKE ONTARIO', lakeX, lakeY);
 
-    // Matrix View (replaces blurry heatmap)
     if (viewMode === 'heatmap') {
       const cellSize = Math.max(8, 20 / map.zoom * 2.5);
       const grid = new Map<string, number>();
@@ -146,17 +140,15 @@ export function TheftMap() {
           const gx = parseInt(gxS), gy = parseInt(gyS);
           const t = count / max;
           
-          let color = `rgba(59, 130, 246, ${Math.min(0.8, t + 0.2)})`; // Blue
-          if (t > 0.5) color = `rgba(234, 179, 8, ${Math.min(0.9, t + 0.2)})`; // Yellow
-          if (t > 0.8) color = `rgba(239, 68, 68, ${Math.min(1, t + 0.2)})`; // Red
+          let color = `rgba(59, 130, 246, ${Math.min(0.8, t + 0.2)})`;
+          if (t > 0.5) color = `rgba(234, 179, 8, ${Math.min(0.9, t + 0.2)})`;
+          if (t > 0.8) color = `rgba(239, 68, 68, ${Math.min(1, t + 0.2)})`;
 
           ctx.fillStyle = color;
-          // Sharp rectangle rendering
           ctx.fillRect(gx * cellSize + 1, gy * cellSize + 1, cellSize - 2, cellSize - 2);
         });
       }
     } else {
-      // Scatter (Sharp Blocks)
       const size = Math.max(2, 3 * map.zoom / 2.5);
       filteredRecords.forEach((rec) => {
         const [x, y] = toPixel(rec.lat, rec.lng, map, width, height);
@@ -174,7 +166,6 @@ export function TheftMap() {
       });
     }
 
-    // Tactical Overlays (Scale & North)
     ctx.fillStyle = dark ? '#525866' : '#a1a1aa';
     ctx.font = '10px monospace';
     ctx.textAlign = 'left';

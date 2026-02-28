@@ -6,15 +6,15 @@ import {
 import { useStore } from '../store/useStore';
 import { Clock, Crosshair, Building2, Activity } from 'lucide-react';
 
-const AUTO_COLOR = '#eab308'; // Tactical Yellow
-const BIKE_COLOR = '#3b82f6'; // Tactical Blue
+const AUTO_COLOR = '#eab308';
+const BIKE_COLOR = '#3b82f6';
 const PIE_COLORS = ['#3b82f6', '#eab308', '#ef4444', '#10b981', '#8b5cf6', '#64748b'];
 
-function getLast3Months(): { key: string; label: string }[] {
+function getLast6Months(): { key: string; label: string }[] {
   const result: { key: string; label: string }[] = [];
   const now = new Date();
   const names = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
-  for (let i = 2; i >= 0; i--) {
+  for (let i = 5; i >= 0; i--) {
     const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
     result.push({
       key: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`,
@@ -37,7 +37,7 @@ export function Charts() {
   }, [filteredRecords]);
 
   const monthlyData = useMemo(() => {
-    const months = getLast3Months();
+    const months = getLast6Months();
     const map = new Map<string, { auto: number; bike: number }>();
     months.forEach((m) => map.set(m.key, { auto: 0, bike: 0 }));
     filteredRecords.forEach((r) => {
@@ -124,7 +124,6 @@ export function Charts() {
               <XAxis dataKey="month" tick={axisStyle} axisLine={false} tickLine={false} />
               <YAxis tick={axisStyle} axisLine={false} tickLine={false} width={30} />
               <Tooltip content={<ChartTooltip />} />
-              {/* Using type="step" for a tactical, rigid aesthetic instead of smooth curves */}
               <Area type="step" dataKey="auto" name="AUTO" stackId="1" stroke={AUTO_COLOR} strokeWidth={2} fill={AUTO_COLOR} fillOpacity={0.15} />
               <Area type="step" dataKey="bike" name="BIKE" stackId="1" stroke={BIKE_COLOR} strokeWidth={2} fill={BIKE_COLOR} fillOpacity={0.15} />
             </AreaChart>
