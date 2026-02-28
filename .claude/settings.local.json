@@ -5,7 +5,13 @@
       "Bash(curl -s \"https://services.arcgis.com/S9th0jAJ7bqgIRjw/arcgis/rest/services/Auto_Theft_Open_Data/FeatureServer/0/query?where=OCC_YEAR%3E%3D2026&outFields=OCC_YEAR,OCC_MONTH,OCC_DATE&f=json&resultRecordCount=5\")",
       "Bash(python3 -m json.tool)",
       "Bash(curl -s \"https://services.arcgis.com/S9th0jAJ7bqgIRjw/arcgis/rest/services/Auto_Theft_Open_Data/FeatureServer/0/query?where=1%3D1&outFields=OCC_YEAR&f=json&resultRecordCount=1&orderByFields=OCC_YEAR%20DESC\")",
-      "Bash(curl -s \"https://services.arcgis.com/S9th0jAJ7bqgIRjw/arcgis/rest/services/Auto_Theft_Open_Data/FeatureServer/0/query?where=1%3D1&outFields=OCC_DATE,OCC_YEAR,OCC_MONTH&f=json&resultRecordCount=3&orderByFields=OCC_DATE%20DESC\")"
+      "Bash(curl -s \"https://services.arcgis.com/S9th0jAJ7bqgIRjw/arcgis/rest/services/Auto_Theft_Open_Data/FeatureServer/0/query?where=1%3D1&outFields=OCC_DATE,OCC_YEAR,OCC_MONTH&f=json&resultRecordCount=3&orderByFields=OCC_DATE%20DESC\")",
+      "Bash(python3 -c \"import py_compile; py_compile.compile\\(''scrape.py'', doraise=True\\)\")",
+      "Bash(python -c \"import py_compile; py_compile.compile\\(''scrape.py'', doraise=True\\)\")",
+      "Bash(where python)",
+      "Bash(where python3)",
+      "Bash(where py)",
+      "Bash(/c/Users/roofie/AppData/Local/Programs/Python/Python314/python.exe -c \"import py_compile; py_compile.compile\\(''scrape.py'', doraise=True\\)\")"
     ]
   }
 }

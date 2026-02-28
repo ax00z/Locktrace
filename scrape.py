@@ -24,7 +24,7 @@ ENDPOINTS = {
     ),
 }
 
-TIME_WINDOW_MONTHS = 3
+TIME_WINDOW_MONTHS = 6
 PAGE_SIZE = 2000
 OUTPUT_DIR = os.path.join("public", "data")
 MAX_RETRIES = 3
@@ -96,7 +96,7 @@ def build_where_clauses(available_fields):
     clauses = []
 
     if "OCC_YEAR" in available_fields:
-        clauses.append((f"OCC_YEAR >= {cutoff.year}", f"year >= {cutoff.year}"))
+        clauses.append((f"OCC_YEAR >= '{cutoff.year}'", f"year >= {cutoff.year}"))
     if "OCC_DATE" in available_fields:
         ms = int(cutoff.timestamp() * 1000)
         clauses.append((f"OCC_DATE >= {ms}", "OCC_DATE epoch"))
@@ -202,11 +202,8 @@ def parse_date(raw, year, month, day):
 
 
 def process(raw_features, theft_type):
-    cutoff = now_utc() - timedelta(days=TIME_WINDOW_MONTHS * 30)
-    cutoff_ym = cutoff.year * 100 + cutoff.month
     records = []
     bad_coords = 0
-    out_of_range = 0
 
     for f in raw_features:
         attrs = f.get("attributes", {})
@@ -234,13 +231,6 @@ def process(raw_features, theft_type):
         day = first_of(attrs, FIELD_MAP["day"], 1)
         hour = first_of(attrs, FIELD_MAP["hour"], 12)
 
-        try:
-            if int(year) * 100 + int(month) < cutoff_ym:
-                out_of_range += 1
-                continue
-        except (TypeError, ValueError):
-            pass
-
         raw_date = first_of(attrs, FIELD_MAP["date"], "")
         date_str = parse_date(raw_date, year, month, day)
 
@@ -259,8 +249,22 @@ def process(raw_features, theft_type):
             "status": str(first_of(attrs, ["STATUS"], "Unknown")).strip(),
         })
 
-    print(f"  {len(records)} valid, {bad_coords} bad coords, {out_of_range} outside window")
+    records = trim_to_window(records)
+    print(f"  {len(records)} valid, {bad_coords} bad coords")
     return records
+
+
+def trim_to_window(records):
+    if not records:
+        return records
+    latest_ym = max(r["year"] * 100 + r["month"] for r in records)
+    latest_year = latest_ym // 100
+    latest_month = latest_ym % 100
+    cutoff = datetime(latest_year, latest_month, 1) - timedelta(days=TIME_WINDOW_MONTHS * 30)
+    cutoff_ym = cutoff.year * 100 + cutoff.month
+    trimmed = [r for r in records if r["year"] * 100 + r["month"] >= cutoff_ym]
+    print(f"  Window: {cutoff.year}-{cutoff.month:02d} to {latest_year}-{latest_month:02d} ({len(records) - len(trimmed)} records outside window)")
+    return trimmed
 
 
 def save(records, filename):
