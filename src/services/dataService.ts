@@ -6,13 +6,7 @@ const BIKE_THEFT_API =
   'https://services.arcgis.com/S9th0jAJ7bqgIRjw/arcgis/rest/services/Bicycle_Thefts_Open_Data/FeatureServer/0/query';
 
 const PAGE_SIZE = 2000;
-
-function cutoffDate(): Date {
-  const d = new Date();
-  d.setMonth(d.getMonth() - 6);
-  d.setHours(0, 0, 0, 0);
-  return d;
-}
+const WINDOW_MONTHS = 6;
 
 const MONTH_NAMES: Record<string, number> = {
   January: 1, February: 2, March: 3, April: 4, May: 5, June: 6,
@@ -56,7 +50,7 @@ function parseRecord(f: any, theftType: 'auto' | 'bike'): TheftRecord | null {
   const dateStr = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
 
   const recordDate = new Date(year, month - 1, day);
-  if (recordDate < cutoffDate() || recordDate > now) return null;
+  if (recordDate > now) return null;
 
   return {
     id: `${theftType}-${a.EVENT_UNIQUE_ID || a.OBJECTID || ''}`,
@@ -70,15 +64,33 @@ function parseRecord(f: any, theftType: 'auto' | 'bike'): TheftRecord | null {
   };
 }
 
+function trimToWindow(records: TheftRecord[]): TheftRecord[] {
+  if (records.length === 0) return records;
+
+  const latest = records.reduce((max, r) => {
+    const d = new Date(r.year, r.month - 1, r.day);
+    return d > max ? d : max;
+  }, new Date(0));
+
+  const cutoff = new Date(latest);
+  cutoff.setMonth(cutoff.getMonth() - WINDOW_MONTHS);
+  cutoff.setHours(0, 0, 0, 0);
+
+  return records.filter((r) => {
+    const d = new Date(r.year, r.month - 1, r.day);
+    return d >= cutoff;
+  });
+}
+
 async function fetchPaginated(url: string, where: string): Promise<unknown[]> {
   const all: unknown[] = [];
   let offset = 0;
 
   while (true) {
     const params = new URLSearchParams({
-      where, 
-      outFields: '*', 
-      outSR: '4326', 
+      where,
+      outFields: '*',
+      outSR: '4326',
       f: 'json',
       resultRecordCount: String(PAGE_SIZE),
       resultOffset: String(offset),
@@ -106,8 +118,8 @@ async function fetchPaginated(url: string, where: string): Promise<unknown[]> {
 async function fetchWithFallback(url: string): Promise<unknown[]> {
   const year = new Date().getFullYear();
   const strategies = [
-    `OCC_YEAR >= ${year - 1}`,
-    `OCC_YEAR >= ${year - 2}`,
+    `OCC_YEAR >= '${year - 1}'`,
+    `OCC_YEAR >= '${year - 2}'`,
     '1=1',
   ];
 
@@ -133,13 +145,7 @@ async function fetchLive(url: string, type: 'auto' | 'bike'): Promise<TheftRecor
 async function fetchStatic(path: string): Promise<TheftRecord[]> {
   const resp = await fetch(`${path}?_t=${Date.now()}`, { cache: 'no-store' });
   if (!resp.ok) throw new Error(`Not found: ${path}`);
-  const data: TheftRecord[] = await resp.json();
-  const cutoff = cutoffDate();
-  const now = new Date();
-  return data.filter((r) => {
-    const d = new Date(r.year, r.month - 1, r.day);
-    return d >= cutoff && d <= now;
-  });
+  return await resp.json();
 }
 
 function deduplicate(records: TheftRecord[]): TheftRecord[] {
@@ -162,7 +168,8 @@ function assignUniqueIds(records: TheftRecord[]): TheftRecord[] {
 }
 
 function prepare(records: TheftRecord[]): TheftRecord[] {
-  let result = deduplicate(records);
+  let result = trimToWindow(records);
+  result = deduplicate(result);
   result = assignUniqueIds(result);
   result.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
   return result;

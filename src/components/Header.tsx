@@ -1,9 +1,24 @@
+import { useMemo } from 'react';
 import { Shield, Crosshair, BarChart3, Sun, Moon } from 'lucide-react';
 import { useStore } from '../store/useStore';
 import type { TheftFilter, ViewMode } from '../types';
 
+const SHORT_MONTHS = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
+
 export function Header() {
   const { filter, setFilter, viewMode, setViewMode, records, loading, theme, toggleTheme } = useStore();
+
+  const dataRange = useMemo(() => {
+    if (records.length === 0) return '';
+    let minDate = new Date(records[0].year, records[0].month - 1, records[0].day);
+    let maxDate = minDate;
+    for (const r of records) {
+      const d = new Date(r.year, r.month - 1, r.day);
+      if (d < minDate) minDate = d;
+      if (d > maxDate) maxDate = d;
+    }
+    return `${SHORT_MONTHS[minDate.getMonth()]} ${minDate.getFullYear()} – ${SHORT_MONTHS[maxDate.getMonth()]} ${maxDate.getFullYear()}`;
+  }, [records]);
 
   const filters: { value: TheftFilter; label: string }[] = [
     { value: 'all', label: 'ALL' },
@@ -39,7 +54,7 @@ export function Header() {
               </h1>
               {!loading && (
                 <span className={`text-[10px] tracking-widest ${textMuted} mt-0.5`}>
-                  {records.length.toLocaleString()} RECORDS · LAST 6 MONTHS
+                  {records.length.toLocaleString()} RECORDS · {dataRange}
                 </span>
               )}
             </div>
