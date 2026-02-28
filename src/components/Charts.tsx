@@ -4,16 +4,16 @@ import {
   AreaChart, Area, PieChart, Pie, Cell,
 } from 'recharts';
 import { useStore } from '../store/useStore';
-import { Clock, MapPin, Building2, TrendingUp } from 'lucide-react';
+import { Clock, Crosshair, Building2, Activity } from 'lucide-react';
 
-const AUTO_COLOR = '#ff6450';
-const BIKE_COLOR = '#3cb4f0';
-const PIE_COLORS = ['#ff6450', '#3cb4f0', '#2dd4a0', '#f0c040', '#a78bfa', '#f472b6'];
+const AUTO_COLOR = '#eab308'; // Tactical Yellow
+const BIKE_COLOR = '#3b82f6'; // Tactical Blue
+const PIE_COLORS = ['#3b82f6', '#eab308', '#ef4444', '#10b981', '#8b5cf6', '#64748b'];
 
 function getLast3Months(): { key: string; label: string }[] {
   const result: { key: string; label: string }[] = [];
   const now = new Date();
-  const names = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  const names = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
   for (let i = 2; i >= 0; i--) {
     const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
     result.push({
@@ -59,14 +59,14 @@ export function Charts() {
       .sort((a, b) => (b[1].auto + b[1].bike) - (a[1].auto + a[1].bike))
       .slice(0, 8)
       .map(([name, c]) => ({
-        name: name.length > 20 ? name.slice(0, 18) + '…' : name,
+        name: name.length > 20 ? name.slice(0, 18).toUpperCase() + '…' : name.toUpperCase(),
         auto: c.auto, bike: c.bike,
       }));
   }, [filteredRecords]);
 
   const premiseData = useMemo(() => {
     const map = new Map<string, number>();
-    filteredRecords.forEach((r) => map.set(r.premiseType, (map.get(r.premiseType) || 0) + 1));
+    filteredRecords.forEach((r) => map.set(r.premiseType.toUpperCase(), (map.get(r.premiseType.toUpperCase()) || 0) + 1));
     return Array.from(map.entries())
       .sort((a, b) => b[1] - a[1])
       .slice(0, 6)
@@ -77,114 +77,98 @@ export function Charts() {
   const ChartTooltip = ({ active, payload, label }: any) => {
     if (!active || !payload?.length) return null;
     return (
-      <div className={`backdrop-blur border rounded-lg px-3 py-2 shadow-xl ${dark ? 'bg-[#0a1628]/95 border-[#1e508c]' : 'bg-white/95 border-[#d0daea]'}`}>
-        <p className={`text-xs font-medium mb-1 ${dark ? 'text-blue-200/80' : 'text-[#0a1628]'}`}>{label}</p>
+      <div className={`border px-3 py-2 font-mono uppercase ${dark ? 'bg-[#090a0c] border-[#4b5263]' : 'bg-white border-[#09090b]'}`}>
+        <p className={`text-[10px] font-bold tracking-widest mb-2 border-b pb-1 ${dark ? 'text-white border-[#22262f]' : 'text-black border-[#e4e4e7]'}`}>{label}</p>
         {payload.map((p: { name: string; value: number; color: string }, i: number) => (
-          <div key={i} className="flex items-center gap-2 text-xs">
-            <div className="w-2 h-2 rounded-full" style={{ backgroundColor: p.color }} />
-            <span className={dark ? 'text-blue-300/50' : 'text-[#5a7a9a]'}>{p.name}:</span>
-            <span className={`font-medium ${dark ? 'text-white' : 'text-[#0a1628]'}`}>{p.value}</span>
+          <div key={i} className="flex items-center gap-2 text-[10px] tracking-widest mt-1">
+            <div className="w-1.5 h-1.5" style={{ backgroundColor: p.color }} />
+            <span className={dark ? 'text-[#8a919e]' : 'text-[#52525b]'}>{p.name}:</span>
+            <span className={`font-bold ${dark ? 'text-[#e2e4e9]' : 'text-[#09090b]'}`}>{p.value}</span>
           </div>
         ))}
       </div>
     );
   };
 
-  const cardClass = `backdrop-blur border rounded-xl p-4 ${dark ? 'bg-[#0a1628]/60 border-[#112a4a]' : 'bg-white/80 border-[#d0daea]'}`;
-  const tickFill = dark ? '#4a80b0' : '#6a8ab0';
-  const titleColor = dark ? 'text-white' : 'text-[#0a1628]';
-  const axisStyle = { fontSize: 9, fill: tickFill };
+  const cardClass = `border p-4 font-mono uppercase ${dark ? 'bg-[#090a0c] border-[#22262f]' : 'bg-white border-[#e4e4e7]'}`;
+  const tickFill = dark ? '#8a919e' : '#52525b';
+  const titleColor = dark ? 'text-[#e2e4e9]' : 'text-[#09090b]';
+  const axisStyle = { fontSize: 9, fill: tickFill, fontFamily: 'monospace' };
 
   return (
     <div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className={cardClass}>
-          <div className="flex items-center gap-2 mb-3">
-            <Clock className="w-4 h-4 text-teal-400" />
-            <h3 className={`text-sm font-semibold ${titleColor}`}>Hourly</h3>
+          <div className="flex items-center gap-2 mb-4 border-b pb-2 border-current" style={{ borderColor: dark ? '#22262f' : '#e4e4e7' }}>
+            <Clock className={`w-3.5 h-3.5 ${titleColor}`} />
+            <h3 className={`text-[11px] font-bold tracking-widest ${titleColor}`}>TEMPORAL DISTRIBUTION</h3>
           </div>
           <ResponsiveContainer width="100%" height={180}>
-            <BarChart data={hourlyData} barGap={0} barCategoryGap="15%">
+            <BarChart data={hourlyData} barGap={0} barCategoryGap="20%">
               <XAxis dataKey="hour" tick={axisStyle} axisLine={false} tickLine={false} interval={3} />
               <YAxis tick={axisStyle} axisLine={false} tickLine={false} width={30} />
-              <Tooltip content={<ChartTooltip />} />
-              <Bar dataKey="auto" name="Auto" stackId="a" fill={AUTO_COLOR} />
-              <Bar dataKey="bike" name="Bike" stackId="a" fill={BIKE_COLOR} radius={[2, 2, 0, 0]} />
+              <Tooltip content={<ChartTooltip />} cursor={{ fill: dark ? '#111318' : '#f4f4f5' }} />
+              <Bar dataKey="auto" name="AUTO" stackId="a" fill={AUTO_COLOR} />
+              <Bar dataKey="bike" name="BIKE" stackId="a" fill={BIKE_COLOR} />
             </BarChart>
           </ResponsiveContainer>
-          <Legend dark={dark} />
         </div>
 
         <div className={cardClass}>
-          <div className="flex items-center gap-2 mb-3">
-            <TrendingUp className="w-4 h-4 text-emerald-400" />
-            <h3 className={`text-sm font-semibold ${titleColor}`}>Monthly</h3>
+          <div className="flex items-center gap-2 mb-4 border-b pb-2 border-current" style={{ borderColor: dark ? '#22262f' : '#e4e4e7' }}>
+            <Activity className={`w-3.5 h-3.5 ${titleColor}`} />
+            <h3 className={`text-[11px] font-bold tracking-widest ${titleColor}`}>INCIDENT VELOCITY</h3>
           </div>
           <ResponsiveContainer width="100%" height={180}>
             <AreaChart data={monthlyData}>
               <XAxis dataKey="month" tick={axisStyle} axisLine={false} tickLine={false} />
               <YAxis tick={axisStyle} axisLine={false} tickLine={false} width={30} />
               <Tooltip content={<ChartTooltip />} />
-              <Area type="monotone" dataKey="auto" name="Auto" stackId="1" stroke={AUTO_COLOR} fill={AUTO_COLOR} fillOpacity={0.25} />
-              <Area type="monotone" dataKey="bike" name="Bike" stackId="1" stroke={BIKE_COLOR} fill={BIKE_COLOR} fillOpacity={0.25} />
+              {/* Using type="step" for a tactical, rigid aesthetic instead of smooth curves */}
+              <Area type="step" dataKey="auto" name="AUTO" stackId="1" stroke={AUTO_COLOR} strokeWidth={2} fill={AUTO_COLOR} fillOpacity={0.15} />
+              <Area type="step" dataKey="bike" name="BIKE" stackId="1" stroke={BIKE_COLOR} strokeWidth={2} fill={BIKE_COLOR} fillOpacity={0.15} />
             </AreaChart>
           </ResponsiveContainer>
-          <Legend dark={dark} />
         </div>
 
         <div className={cardClass}>
-          <div className="flex items-center gap-2 mb-3">
-            <MapPin className="w-4 h-4 text-[#ff6450]" />
-            <h3 className={`text-sm font-semibold ${titleColor}`}>Neighbourhoods</h3>
+          <div className="flex items-center gap-2 mb-4 border-b pb-2 border-current" style={{ borderColor: dark ? '#22262f' : '#e4e4e7' }}>
+            <Crosshair className={`w-3.5 h-3.5 ${titleColor}`} />
+            <h3 className={`text-[11px] font-bold tracking-widest ${titleColor}`}>SECTOR FREQUENCY</h3>
           </div>
           <ResponsiveContainer width="100%" height={200}>
             <BarChart data={topNeighbourhoods} layout="vertical">
               <XAxis type="number" tick={axisStyle} axisLine={false} tickLine={false} />
-              <YAxis dataKey="name" type="category" tick={{ fontSize: 8, fill: tickFill }} axisLine={false} tickLine={false} width={110} />
-              <Tooltip content={<ChartTooltip />} />
-              <Bar dataKey="auto" name="Auto" stackId="a" fill={AUTO_COLOR} />
-              <Bar dataKey="bike" name="Bike" stackId="a" fill={BIKE_COLOR} radius={[0, 4, 4, 0]} />
+              <YAxis dataKey="name" type="category" tick={{ fontSize: 9, fill: tickFill, fontFamily: 'monospace' }} axisLine={false} tickLine={false} width={110} />
+              <Tooltip content={<ChartTooltip />} cursor={{ fill: dark ? '#111318' : '#f4f4f5' }} />
+              <Bar dataKey="auto" name="AUTO" stackId="a" fill={AUTO_COLOR} />
+              <Bar dataKey="bike" name="BIKE" stackId="a" fill={BIKE_COLOR} />
             </BarChart>
           </ResponsiveContainer>
         </div>
 
         <div className={cardClass}>
-          <div className="flex items-center gap-2 mb-3">
-            <Building2 className="w-4 h-4 text-violet-400" />
-            <h3 className={`text-sm font-semibold ${titleColor}`}>Premise</h3>
+          <div className="flex items-center gap-2 mb-4 border-b pb-2 border-current" style={{ borderColor: dark ? '#22262f' : '#e4e4e7' }}>
+            <Building2 className={`w-3.5 h-3.5 ${titleColor}`} />
+            <h3 className={`text-[11px] font-bold tracking-widest ${titleColor}`}>ENVIRONMENT TYPOLOGY</h3>
           </div>
-          <ResponsiveContainer width="100%" height={180}>
+          <ResponsiveContainer width="100%" height={160}>
             <PieChart>
-              <Pie data={premiseData} cx="50%" cy="50%" innerRadius={40} outerRadius={70} paddingAngle={3} dataKey="value">
+              <Pie data={premiseData} cx="50%" cy="50%" innerRadius={45} outerRadius={70} paddingAngle={2} stroke="none" dataKey="value">
                 {premiseData.map((_, i) => <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />)}
               </Pie>
               <Tooltip content={<ChartTooltip />} />
             </PieChart>
           </ResponsiveContainer>
-          <div className="flex flex-wrap gap-2 mt-1 justify-center">
+          <div className="flex flex-wrap gap-x-4 gap-y-1 mt-3 justify-center">
             {premiseData.map((d, i) => (
-              <div key={d.name} className="flex items-center gap-1">
-                <div className="w-2 h-2 rounded-full" style={{ backgroundColor: PIE_COLORS[i % PIE_COLORS.length] }} />
-                <span className={`text-[9px] ${dark ? 'text-blue-300/50' : 'text-[#5a7a9a]'}`}>{d.name} ({d.value})</span>
+              <div key={d.name} className="flex items-center gap-1.5">
+                <div className="w-1.5 h-1.5" style={{ backgroundColor: PIE_COLORS[i % PIE_COLORS.length] }} />
+                <span className={`text-[9px] tracking-widest ${dark ? 'text-[#8a919e]' : 'text-[#52525b]'}`}>{d.name} [{d.value}]</span>
               </div>
             ))}
           </div>
         </div>
-      </div>
-    </div>
-  );
-}
-
-function Legend({ dark }: { dark: boolean }) {
-  return (
-    <div className="flex items-center justify-center gap-4 mt-2">
-      <div className="flex items-center gap-1.5">
-        <div className="w-2.5 h-2.5 rounded-sm bg-[#ff6450]" />
-        <span className={`text-[10px] ${dark ? 'text-blue-300/50' : 'text-[#5a7a9a]'}`}>Auto</span>
-      </div>
-      <div className="flex items-center gap-1.5">
-        <div className="w-2.5 h-2.5 rounded-sm bg-[#3cb4f0]" />
-        <span className={`text-[10px] ${dark ? 'text-blue-300/50' : 'text-[#5a7a9a]'}`}>Bike</span>
       </div>
     </div>
   );

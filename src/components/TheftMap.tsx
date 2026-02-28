@@ -15,7 +15,7 @@ interface MapState {
 
 function toPixel(lat: number, lng: number, s: MapState, w: number, h: number): [number, number] {
   const scale = s.zoom * 800;
-  return [w / 2 + (lng - s.centerLng) * scale, h / 2 - (lat - s.centerLat) * scale * 1.3];
+  return [Math.floor(w / 2 + (lng - s.centerLng) * scale), Math.floor(h / 2 - (lat - s.centerLat) * scale * 1.3)];
 }
 
 function toLatLng(px: number, py: number, s: MapState, w: number, h: number) {
@@ -57,39 +57,36 @@ export function TheftMap() {
 
     const { width, height } = dims;
     const dpr = window.devicePixelRatio || 1;
-    canvas.width = width * dpr;
-    canvas.height = height * dpr;
+    
+    // Strict pixel mapping to prevent blurring
+    canvas.width = Math.floor(width * dpr);
+    canvas.height = Math.floor(height * dpr);
     canvas.style.width = `${width}px`;
     canvas.style.height = `${height}px`;
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
-    const bg = ctx.createLinearGradient(0, 0, 0, height);
-    if (dark) {
-      bg.addColorStop(0, '#040d1a');
-      bg.addColorStop(1, '#0a1628');
-    } else {
-      bg.addColorStop(0, '#e8eef6');
-      bg.addColorStop(1, '#d8e4f0');
-    }
-    ctx.fillStyle = bg;
+    // Tactical Background
+    ctx.fillStyle = dark ? '#090a0c' : '#ffffff';
     ctx.fillRect(0, 0, width, height);
 
-    const gridColor = dark ? 'rgba(17, 42, 74, 0.4)' : 'rgba(160, 185, 210, 0.3)';
+    // Sharp Grid
+    const gridColor = dark ? '#1a1d24' : '#f4f4f5';
     ctx.strokeStyle = gridColor;
-    ctx.lineWidth = 0.5;
+    ctx.lineWidth = 1;
     const step = 0.02;
     const tl = toLatLng(0, 0, map, width, height);
     const br = toLatLng(width, height, map, width, height);
 
     for (let lat = Math.floor(tl.lat / step) * step; lat >= br.lat; lat -= step) {
       const [, y] = toPixel(lat, 0, map, width, height);
-      ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(width, y); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(0, Math.floor(y) + 0.5); ctx.lineTo(width, Math.floor(y) + 0.5); ctx.stroke();
     }
     for (let lng = Math.floor(tl.lng / step) * step; lng <= br.lng; lng += step) {
       const [x] = toPixel(0, lng, map, width, height);
-      ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, height); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(Math.floor(x) + 0.5, 0); ctx.lineTo(Math.floor(x) + 0.5, height); ctx.stroke();
     }
 
+    // Land Boundary
     const boundary = [
       [43.855, -79.639], [43.855, -79.115], [43.58, -79.115],
       [43.58, -79.26], [43.60, -79.44], [43.59, -79.50],
@@ -101,31 +98,13 @@ export function TheftMap() {
       i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
     });
     ctx.closePath();
-    ctx.fillStyle = dark ? 'rgba(10, 22, 40, 0.6)' : 'rgba(200, 215, 235, 0.4)';
+    ctx.fillStyle = dark ? '#0f1115' : '#fafafa';
     ctx.fill();
-    ctx.strokeStyle = dark ? 'rgba(30, 80, 140, 0.35)' : 'rgba(80, 120, 180, 0.3)';
-    ctx.lineWidth = 1.5;
+    ctx.strokeStyle = dark ? '#22262f' : '#e4e4e7';
+    ctx.lineWidth = 1;
     ctx.stroke();
 
-    const roads = [
-      [[43.86, -79.39], [43.58, -79.39]],
-      [[43.73, -79.64], [43.73, -79.12]],
-      [[43.65, -79.64], [43.65, -79.12]],
-      [[43.78, -79.64], [43.78, -79.12]],
-      [[43.86, -79.49], [43.58, -79.49]],
-      [[43.86, -79.33], [43.58, -79.33]],
-    ];
-    ctx.strokeStyle = dark ? 'rgba(30, 80, 140, 0.2)' : 'rgba(140, 170, 200, 0.25)';
-    ctx.lineWidth = 1;
-    roads.forEach((road) => {
-      ctx.beginPath();
-      road.forEach(([lat, lng], i) => {
-        const [x, y] = toPixel(lat, lng, map, width, height);
-        i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
-      });
-      ctx.stroke();
-    });
-
+    // Lake Ontario
     const lake = [
       [43.63, -79.64], [43.60, -79.55], [43.59, -79.45],
       [43.60, -79.35], [43.58, -79.20], [43.58, -79.11],
@@ -137,42 +116,18 @@ export function TheftMap() {
       i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
     });
     ctx.closePath();
-    if (dark) {
-      const lakeGrad = ctx.createLinearGradient(0, height * 0.7, 0, height);
-      lakeGrad.addColorStop(0, 'rgba(8, 60, 120, 0.2)');
-      lakeGrad.addColorStop(1, 'rgba(8, 60, 120, 0.08)');
-      ctx.fillStyle = lakeGrad;
-    } else {
-      ctx.fillStyle = 'rgba(100, 160, 220, 0.15)';
-    }
+    ctx.fillStyle = dark ? '#0a0b0e' : '#f4f4f5';
     ctx.fill();
-    ctx.strokeStyle = dark ? 'rgba(30, 100, 180, 0.25)' : 'rgba(80, 140, 200, 0.3)';
-    ctx.lineWidth = 1;
-    ctx.stroke();
 
     const [lakeX, lakeY] = toPixel(43.55, -79.38, map, width, height);
-    ctx.fillStyle = dark ? 'rgba(30, 100, 180, 0.4)' : 'rgba(50, 100, 160, 0.4)';
-    ctx.font = `${Math.max(10, 12 * map.zoom / 2.5)}px system-ui`;
+    ctx.fillStyle = dark ? '#525866' : '#a1a1aa';
+    ctx.font = `bold ${Math.max(10, 12 * map.zoom / 2.5)}px monospace`;
     ctx.textAlign = 'center';
-    ctx.fillText('Lake Ontario', lakeX, lakeY);
+    ctx.fillText('LAKE ONTARIO', lakeX, lakeY);
 
-    if (map.zoom > 2) {
-      const labels: [number, number, string][] = [
-        [43.77, -79.41, 'North York'], [43.72, -79.26, 'Scarborough'],
-        [43.71, -79.52, 'Etobicoke'], [43.66, -79.38, 'Downtown'],
-        [43.69, -79.35, 'East York'], [43.65, -79.44, 'Liberty Village'],
-        [43.68, -79.30, 'The Beaches'], [43.76, -79.33, 'Don Mills'],
-      ];
-      ctx.fillStyle = dark ? 'rgba(100, 160, 220, 0.35)' : 'rgba(60, 100, 150, 0.4)';
-      ctx.font = `${Math.max(9, 10 * map.zoom / 2.5)}px system-ui`;
-      labels.forEach(([lat, lng, name]) => {
-        const [x, y] = toPixel(lat, lng, map, width, height);
-        if (x > 0 && x < width && y > 0 && y < height) ctx.fillText(name, x, y);
-      });
-    }
-
+    // Matrix View (replaces blurry heatmap)
     if (viewMode === 'heatmap') {
-      const cellSize = Math.max(3, 15 / map.zoom * 2.5);
+      const cellSize = Math.max(8, 20 / map.zoom * 2.5);
       const grid = new Map<string, number>();
       let max = 0;
 
@@ -190,75 +145,47 @@ export function TheftMap() {
           const [gxS, gyS] = key.split(',');
           const gx = parseInt(gxS), gy = parseInt(gyS);
           const t = count / max;
-          const radius = cellSize * (1 + t * 2);
-          const cx = gx * cellSize + cellSize / 2;
-          const cy = gy * cellSize + cellSize / 2;
-          const grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, radius);
+          
+          let color = `rgba(59, 130, 246, ${Math.min(0.8, t + 0.2)})`; // Blue
+          if (t > 0.5) color = `rgba(234, 179, 8, ${Math.min(0.9, t + 0.2)})`; // Yellow
+          if (t > 0.8) color = `rgba(239, 68, 68, ${Math.min(1, t + 0.2)})`; // Red
 
-          if (t > 0.7) {
-            grad.addColorStop(0, `rgba(255, 100, 80, ${0.6 * t})`);
-            grad.addColorStop(0.4, `rgba(255, 160, 60, ${0.4 * t})`);
-            grad.addColorStop(1, 'rgba(255, 160, 60, 0)');
-          } else if (t > 0.3) {
-            grad.addColorStop(0, `rgba(60, 180, 220, ${0.5 * t})`);
-            grad.addColorStop(0.5, `rgba(40, 140, 200, ${0.3 * t})`);
-            grad.addColorStop(1, 'rgba(40, 140, 200, 0)');
-          } else {
-            grad.addColorStop(0, `rgba(20, 120, 180, ${0.4 * t})`);
-            grad.addColorStop(0.5, `rgba(20, 120, 180, ${0.2 * t})`);
-            grad.addColorStop(1, 'rgba(20, 120, 180, 0)');
-          }
-
-          ctx.fillStyle = grad;
-          ctx.beginPath();
-          ctx.arc(cx, cy, radius, 0, Math.PI * 2);
-          ctx.fill();
+          ctx.fillStyle = color;
+          // Sharp rectangle rendering
+          ctx.fillRect(gx * cellSize + 1, gy * cellSize + 1, cellSize - 2, cellSize - 2);
         });
       }
     } else {
-      const r = Math.max(2, 3 * map.zoom / 2.5);
+      // Scatter (Sharp Blocks)
+      const size = Math.max(2, 3 * map.zoom / 2.5);
       filteredRecords.forEach((rec) => {
         const [x, y] = toPixel(rec.lat, rec.lng, map, width, height);
         if (x < -10 || x > width + 10 || y < -10 || y > height + 10) return;
 
         const active = hovered?.id === rec.id || selectedRecord?.id === rec.id;
-        const color = rec.type === 'auto' ? 'rgba(255, 100, 80, 0.7)' : 'rgba(60, 180, 240, 0.7)';
+        ctx.fillStyle = rec.type === 'auto' ? '#eab308' : '#3b82f6';
 
         if (active) {
-          ctx.beginPath();
-          ctx.arc(x, y, r * 4, 0, Math.PI * 2);
-          ctx.fillStyle = rec.type === 'auto' ? 'rgba(255, 100, 80, 0.15)' : 'rgba(60, 180, 240, 0.15)';
-          ctx.fill();
-        }
-
-        ctx.beginPath();
-        ctx.arc(x, y, active ? r * 1.8 : r, 0, Math.PI * 2);
-        ctx.fillStyle = color;
-        ctx.fill();
-
-        if (active) {
-          ctx.strokeStyle = rec.type === 'auto' ? '#ff6450' : '#3cb4f0';
-          ctx.lineWidth = 1.5;
-          ctx.stroke();
+          ctx.fillStyle = '#ffffff';
+          ctx.fillRect(x - size * 2, y - size * 2, size * 4, size * 4);
+        } else {
+          ctx.fillRect(x - size, y - size, size * 2, size * 2);
         }
       });
     }
 
-    ctx.fillStyle = dark ? 'rgba(100, 160, 220, 0.5)' : 'rgba(60, 100, 160, 0.5)';
-    ctx.font = '10px system-ui';
+    // Tactical Overlays (Scale & North)
+    ctx.fillStyle = dark ? '#525866' : '#a1a1aa';
+    ctx.font = '10px monospace';
     ctx.textAlign = 'left';
     const km = (1 / (map.zoom * 800)) * 100 * 111;
-    ctx.fillText(`~${km.toFixed(1)} km`, 15, height - 15);
-    ctx.strokeStyle = dark ? 'rgba(100, 160, 220, 0.3)' : 'rgba(60, 100, 160, 0.3)';
-    ctx.lineWidth = 2;
-    ctx.beginPath(); ctx.moveTo(15, height - 22); ctx.lineTo(115, height - 22); ctx.stroke();
+    ctx.fillText(`[ SCALE: ~${km.toFixed(1)}KM ]`, 15, height - 15);
 
-    ctx.fillStyle = dark ? 'rgba(100, 160, 220, 0.4)' : 'rgba(60, 100, 160, 0.4)';
-    ctx.font = 'bold 12px system-ui';
+    ctx.font = 'bold 12px monospace';
     ctx.textAlign = 'center';
     ctx.fillText('N', width - 25, 25);
     ctx.beginPath(); ctx.moveTo(width - 25, 28); ctx.lineTo(width - 25, 45);
-    ctx.strokeStyle = dark ? 'rgba(100, 160, 220, 0.3)' : 'rgba(60, 100, 160, 0.3)';
+    ctx.strokeStyle = dark ? '#525866' : '#a1a1aa';
     ctx.lineWidth = 1.5; ctx.stroke();
     ctx.beginPath();
     ctx.moveTo(width - 25, 28); ctx.lineTo(width - 22, 34); ctx.lineTo(width - 28, 34);
@@ -290,7 +217,7 @@ export function TheftMap() {
       let found: TheftRecord | null = null;
       for (const r of filteredRecords) {
         const [px, py] = toPixel(r.lat, r.lng, map, dims.width, dims.height);
-        if (Math.sqrt((mx - px) ** 2 + (my - py) ** 2) < 8) { found = r; break; }
+        if (Math.abs(mx - px) < 8 && Math.abs(my - py) < 8) { found = r; break; }
       }
       setHovered(found);
     }
@@ -306,7 +233,7 @@ export function TheftMap() {
     const mx = e.clientX - rect.left, my = e.clientY - rect.top;
     for (const r of filteredRecords) {
       const [px, py] = toPixel(r.lat, r.lng, map, dims.width, dims.height);
-      if (Math.sqrt((mx - px) ** 2 + (my - py) ** 2) < 10) { setSelectedRecord(r); return; }
+      if (Math.abs(mx - px) < 10 && Math.abs(my - py) < 10) { setSelectedRecord(r); return; }
     }
     setSelectedRecord(null);
   };
@@ -317,32 +244,33 @@ export function TheftMap() {
     setMap((p) => ({ ...p, zoom: Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, p.zoom + d * p.zoom * 0.15)) }));
   };
 
-  const btnClass = `w-8 h-8 backdrop-blur rounded-lg flex items-center justify-center transition-colors border ${
+  const btnClass = `w-8 h-8 flex items-center justify-center transition-none border ${
     dark
-      ? 'bg-[#0a1628]/90 border-[#112a4a] text-blue-300/60 hover:text-white hover:bg-[#112a4a]'
-      : 'bg-white/90 border-[#d0daea] text-[#5a7a9a] hover:text-[#0a1628] hover:bg-white'
+      ? 'bg-[#090a0c] border-[#22262f] text-[#8a919e] hover:text-white hover:bg-[#111318]'
+      : 'bg-white border-[#e4e4e7] text-[#52525b] hover:text-black hover:bg-[#f4f4f5]'
   }`;
 
-  const overlayClass = `backdrop-blur rounded-lg px-2 py-1 border ${
-    dark ? 'bg-[#0a1628]/80 border-[#112a4a]' : 'bg-white/80 border-[#d0daea]'
+  const overlayClass = `px-3 py-1.5 border font-mono uppercase ${
+    dark ? 'bg-[#090a0c] border-[#22262f]' : 'bg-white border-[#e4e4e7]'
   }`;
 
-  const overlayText = dark ? 'text-blue-300/50' : 'text-[#5a7a9a]';
+  const overlayText = dark ? 'text-[#e2e4e9]' : 'text-[#09090b]';
 
   return (
-    <div ref={containerRef} className={`relative w-full h-full min-h-[400px] rounded-xl overflow-hidden border shadow-2xl ${dark ? 'border-[#112a4a]' : 'border-[#d0daea]'}`}>
+    <div ref={containerRef} className={`relative w-full h-full min-h-[400px] overflow-hidden border ${dark ? 'border-[#22262f]' : 'border-[#e4e4e7]'}`}>
       <canvas
         ref={canvasRef}
-        className={`w-full h-full ${dragging ? 'cursor-grabbing' : 'cursor-grab'}`}
+        className={`w-full h-full ${dragging ? 'cursor-grabbing' : 'cursor-crosshair'}`}
         onMouseDown={onMouseDown}
         onMouseMove={onMouseMove}
         onMouseUp={onMouseUp}
         onMouseLeave={onMouseLeave}
         onClick={onClick}
         onWheel={onWheel}
+        style={{ imageRendering: 'pixelated' }}
       />
 
-      <div className="absolute top-3 right-3 flex flex-col gap-1">
+      <div className="absolute top-3 right-3 flex flex-col gap-[1px]">
         {[
           { action: () => setMap((p) => ({ ...p, zoom: Math.min(MAX_ZOOM, p.zoom * 1.3) })), icon: ZoomIn },
           { action: () => setMap((p) => ({ ...p, zoom: Math.max(MIN_ZOOM, p.zoom / 1.3) })), icon: ZoomOut },
@@ -355,38 +283,38 @@ export function TheftMap() {
       </div>
 
       <div className="absolute top-3 left-3 flex flex-col gap-1">
-        <div className={`${overlayClass} flex items-center gap-1`}>
+        <div className={`${overlayClass} flex items-center gap-2`}>
           <Crosshair className={`w-3 h-3 ${overlayText}`} />
-          <span className={`text-[10px] font-mono ${overlayText}`}>
+          <span className={`text-[10px] tracking-widest ${overlayText}`}>
             {map.centerLat.toFixed(4)}, {map.centerLng.toFixed(4)}
           </span>
         </div>
         <div className={overlayClass}>
-          <span className={`text-[10px] ${overlayText}`}>
-            {filteredRecords.length.toLocaleString()} points
+          <span className={`text-[10px] tracking-widest ${overlayText}`}>
+            {filteredRecords.length.toLocaleString()} POINTS
           </span>
         </div>
       </div>
 
-      <div className={`absolute bottom-3 right-3 backdrop-blur rounded-lg px-3 py-2 border ${dark ? 'bg-[#0a1628]/90 border-[#112a4a]' : 'bg-white/90 border-[#d0daea]'}`}>
+      <div className={`absolute bottom-3 right-3 ${overlayClass}`}>
         {viewMode === 'scatter' ? (
-          <div className="flex flex-col gap-1">
+          <div className="flex flex-col gap-2">
             <div className="flex items-center gap-2">
-              <div className="w-2.5 h-2.5 rounded-full bg-[#ff6450]" />
-              <span className={`text-[10px] ${dark ? 'text-blue-200/70' : 'text-[#3a5a7a]'}`}>Auto</span>
+              <div className="w-2 h-2 bg-[#eab308]" />
+              <span className={`text-[10px] tracking-widest ${overlayText}`}>AUTO</span>
             </div>
             <div className="flex items-center gap-2">
-              <div className="w-2.5 h-2.5 rounded-full bg-[#3cb4f0]" />
-              <span className={`text-[10px] ${dark ? 'text-blue-200/70' : 'text-[#3a5a7a]'}`}>Bike</span>
+              <div className="w-2 h-2 bg-[#3b82f6]" />
+              <span className={`text-[10px] tracking-widest ${overlayText}`}>BIKE</span>
             </div>
           </div>
         ) : (
           <div className="flex flex-col gap-1">
-            <span className={`text-[10px] font-medium ${overlayText}`}>Density</span>
-            <div className="w-14 h-2 rounded-full bg-gradient-to-r from-[#1478b4] via-[#3cb4dc] to-[#ff6450]" />
+            <span className={`text-[10px] tracking-widest ${overlayText}`}>DENSITY</span>
+            <div className="w-16 h-1.5 bg-gradient-to-r from-[#3b82f6] via-[#eab308] to-[#ef4444]" />
             <div className="flex justify-between">
-              <span className={`text-[9px] ${dark ? 'text-blue-400/40' : 'text-[#8aa8c8]'}`}>Low</span>
-              <span className={`text-[9px] ${dark ? 'text-blue-400/40' : 'text-[#8aa8c8]'}`}>High</span>
+              <span className={`text-[9px] ${dark ? 'text-[#8a919e]' : 'text-[#52525b]'}`}>LOW</span>
+              <span className={`text-[9px] ${dark ? 'text-[#8a919e]' : 'text-[#52525b]'}`}>HIGH</span>
             </div>
           </div>
         )}
@@ -394,16 +322,18 @@ export function TheftMap() {
 
       {hovered && viewMode === 'scatter' && (
         <div
-          className={`absolute z-50 pointer-events-none backdrop-blur rounded-lg px-3 py-2 border shadow-xl ${dark ? 'bg-[#0a1628]/95 border-[#1e508c]' : 'bg-white/95 border-[#d0daea]'}`}
+          className={`absolute z-50 pointer-events-none ${overlayClass} shadow-2xl`}
           style={{ left: mouse.x + 15, top: mouse.y - 10 }}
         >
-          <div className="flex items-center gap-2 mb-1">
-            <span className="text-sm">{hovered.type === 'auto' ? '🚗' : '🚲'}</span>
-            <span className={`text-xs font-semibold capitalize ${dark ? 'text-white' : 'text-[#0a1628]'}`}>{hovered.type} Theft</span>
+          <div className="flex items-center gap-2 mb-1 border-b pb-1 border-current">
+            <div className={`w-2 h-2 ${hovered.type === 'auto' ? 'bg-[#eab308]' : 'bg-[#3b82f6]'}`} />
+            <span className={`text-[10px] font-bold tracking-widest ${overlayText}`}>
+              {hovered.type} THEFT
+            </span>
           </div>
-          <div className={`text-[10px] space-y-0.5 ${dark ? 'text-blue-300/60' : 'text-[#5a7a9a]'}`}>
-            <div>{hovered.neighbourhood}</div>
-            <div>{hovered.date} at {String(hovered.hour).padStart(2, '0')}:00</div>
+          <div className={`text-[9px] space-y-1 mt-2 tracking-widest ${dark ? 'text-[#8a919e]' : 'text-[#52525b]'}`}>
+            <div>LOC: {hovered.neighbourhood}</div>
+            <div>TME: {hovered.date} [{String(hovered.hour).padStart(2, '0')}:00]</div>
           </div>
         </div>
       )}

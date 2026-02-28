@@ -74,14 +74,19 @@ async function fetchPaginated(url: string, where: string): Promise<unknown[]> {
   const all: unknown[] = [];
   let offset = 0;
 
-  while (true) { // eslint-disable-line no-constant-condition
+  while (true) {
     const params = new URLSearchParams({
-      where, outFields: '*', outSR: '4326', f: 'json',
+      where, 
+      outFields: '*', 
+      outSR: '4326', 
+      f: 'json',
       resultRecordCount: String(PAGE_SIZE),
       resultOffset: String(offset),
+      _t: Date.now().toString() // Cache Buster
     });
 
-    const resp = await fetch(`${url}?${params}`);
+    // Force network fetch, bypass browser cache
+    const resp = await fetch(`${url}?${params}`, { cache: 'no-store' });
     if (!resp.ok) throw new Error(`API returned ${resp.status}`);
     const json = await resp.json();
     if (json.error) throw new Error(json.error.message || 'ArcGIS error');
@@ -127,7 +132,7 @@ async function fetchLive(url: string, type: 'auto' | 'bike'): Promise<TheftRecor
 }
 
 async function fetchStatic(path: string): Promise<TheftRecord[]> {
-  const resp = await fetch(path);
+  const resp = await fetch(`${path}?_t=${Date.now()}`, { cache: 'no-store' });
   if (!resp.ok) throw new Error(`Not found: ${path}`);
   const data: TheftRecord[] = await resp.json();
   const cutoff = threeMonthsAgo();
@@ -173,11 +178,7 @@ export async function fetchAllData(): Promise<{ records: TheftRecord[]; source: 
     if (auto.length === 0 && bike.length === 0) throw new Error('Static files empty');
     return { records: prepare([...auto, ...bike]), source: 'static' };
   } catch {
-    const [auto, bike] = await Promise.all([
-      fetchLive(AUTO_THEFT_API, 'auto'),
-      fetchLive(BIKE_THEFT_API, 'bike'),
-    ]);
-    return { records: prepare([...auto, ...bike]), source: 'live' };
+    return fetchLiveDataOnly();
   }
 }
 

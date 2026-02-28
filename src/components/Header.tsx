@@ -1,4 +1,4 @@
-import { Shield, MapPin, BarChart3, Sun, Moon } from 'lucide-react';
+import { Shield, Crosshair, BarChart3, Sun, Moon } from 'lucide-react';
 import { useStore } from '../store/useStore';
 import type { TheftFilter, ViewMode } from '../types';
 
@@ -6,48 +6,53 @@ export function Header() {
   const { filter, setFilter, viewMode, setViewMode, records, loading, theme, toggleTheme } = useStore();
 
   const filters: { value: TheftFilter; label: string }[] = [
-    { value: 'all', label: 'All' },
-    { value: 'auto', label: 'Auto' },
-    { value: 'bike', label: 'Bike' },
+    { value: 'all', label: 'ALL' },
+    { value: 'auto', label: 'AUTO' },
+    { value: 'bike', label: 'BIKE' },
   ];
 
-  const views: { value: ViewMode; label: string; Icon: typeof MapPin }[] = [
-    { value: 'scatter', label: 'Points', Icon: MapPin },
-    { value: 'heatmap', label: 'Heatmap', Icon: BarChart3 },
+  const views: { value: ViewMode; label: string; Icon: typeof Crosshair }[] = [
+    { value: 'scatter', label: 'NODES', Icon: Crosshair },
+    { value: 'heatmap', label: 'MATRIX', Icon: BarChart3 },
   ];
 
   const dark = theme === 'dark';
 
+  const bg = dark ? 'bg-[#090a0c]' : 'bg-white';
+  const border = dark ? 'border-[#22262f]' : 'border-[#e4e4e7]';
+  const text = dark ? 'text-[#e2e4e9]' : 'text-[#09090b]';
+  const textMuted = dark ? 'text-[#525866]' : 'text-[#a1a1aa]';
+  const activeBg = dark ? 'bg-[#3b82f6] text-white border-[#3b82f6]' : 'bg-[#0055ff] text-white border-[#0055ff]';
+  const hoverBg = dark ? 'hover:bg-[#111318]' : 'hover:bg-[#f4f4f5]';
+
   return (
-    <header className={`border-b shadow-lg ${dark ? 'bg-[#060e1e] border-[#112a4a]' : 'bg-white border-[#d0daea]'}`}>
+    <header className={`border-b ${bg} ${border} font-mono uppercase`}>
       <div className="max-w-[1800px] mx-auto px-4 py-3">
-        <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-3">
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-cyan-500 to-blue-700 flex items-center justify-center shadow-md">
-              <Shield className="w-4.5 h-4.5 text-white" />
+        <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
+          <div className="flex items-center gap-4">
+            <div className={`w-10 h-10 flex items-center justify-center border ${border} ${dark ? 'bg-[#0f1115]' : 'bg-[#f4f4f5]'}`}>
+              <Shield className={`w-5 h-5 ${dark ? 'text-[#3b82f6]' : 'text-[#0055ff]'}`} />
             </div>
-            <div>
-              <h1 className={`text-base font-bold tracking-tight ${dark ? 'text-white' : 'text-[#0a1628]'}`}>
-                Toronto Asset Safety Radar
+            <div className="flex flex-col">
+              <h1 className={`text-sm font-bold tracking-widest ${text}`}>
+                LOCKTRACE // TPS SPATIAL INTELLIGENCE
               </h1>
               {!loading && (
-                <span className={`text-[10px] ${dark ? 'text-blue-400/40' : 'text-[#5a7a9a]'}`}>
-                  {records.length.toLocaleString()} records · Last 3 months
+                <span className={`text-[10px] tracking-widest ${textMuted} mt-0.5`}>
+                  {records.length.toLocaleString()} RECORDS · T-90 DAYS
                 </span>
               )}
             </div>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2">
-            <div className={`flex rounded-lg p-0.5 border ${dark ? 'bg-[#0a1628]/80 border-[#112a4a]' : 'bg-[#e8eef6] border-[#d0daea]'}`}>
+          <div className="flex flex-wrap items-center gap-3">
+            <div className="flex">
               {filters.map((opt) => (
                 <button
                   key={opt.value}
                   onClick={() => setFilter(opt.value)}
-                  className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${
-                    filter === opt.value
-                      ? 'bg-gradient-to-r from-cyan-600 to-blue-600 text-white shadow-md'
-                      : dark ? 'text-blue-300/50 hover:text-white hover:bg-[#112a4a]/60' : 'text-[#5a7a9a] hover:text-[#0a1628] hover:bg-white'
+                  className={`px-4 py-1.5 text-[10px] font-bold tracking-widest transition-none border-y border-l last:border-r ${
+                    filter === opt.value ? activeBg : `${border} ${textMuted} ${hoverBg}`
                   }`}
                 >
                   {opt.label}
@@ -55,15 +60,13 @@ export function Header() {
               ))}
             </div>
 
-            <div className={`flex rounded-lg p-0.5 border ${dark ? 'bg-[#0a1628]/80 border-[#112a4a]' : 'bg-[#e8eef6] border-[#d0daea]'}`}>
+            <div className="flex">
               {views.map((opt) => (
                 <button
                   key={opt.value}
                   onClick={() => setViewMode(opt.value)}
-                  className={`flex items-center gap-1 px-3 py-1.5 text-xs font-medium rounded-md transition-all ${
-                    viewMode === opt.value
-                      ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md'
-                      : dark ? 'text-blue-300/50 hover:text-white hover:bg-[#112a4a]/60' : 'text-[#5a7a9a] hover:text-[#0a1628] hover:bg-white'
+                  className={`flex items-center gap-2 px-4 py-1.5 text-[10px] font-bold tracking-widest transition-none border-y border-l last:border-r ${
+                    viewMode === opt.value ? activeBg : `${border} ${textMuted} ${hoverBg}`
                   }`}
                 >
                   <opt.Icon className="w-3 h-3" />
@@ -74,13 +77,9 @@ export function Header() {
 
             <button
               onClick={toggleTheme}
-              className={`w-8 h-8 rounded-lg flex items-center justify-center border transition-colors ${
-                dark
-                  ? 'bg-[#0a1628]/80 border-[#112a4a] text-blue-300/50 hover:text-amber-300 hover:bg-[#112a4a]'
-                  : 'bg-[#e8eef6] border-[#d0daea] text-[#5a7a9a] hover:text-amber-500 hover:bg-white'
-              }`}
+              className={`w-8 h-8 flex items-center justify-center border transition-none ${border} ${textMuted} ${hoverBg}`}
             >
-              {dark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+              {dark ? <Sun className="w-3.5 h-3.5" /> : <Moon className="w-3.5 h-3.5" />}
             </button>
           </div>
         </div>

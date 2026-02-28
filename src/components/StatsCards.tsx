@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { useStore } from '../store/useStore';
-import { Car, Bike, AlertTriangle, TrendingUp, Clock, MapPin } from 'lucide-react';
+import { Car, Bike, Activity, Clock, Crosshair, Database } from 'lucide-react';
 
 export function StatsCards() {
   const records = useStore((s) => s.records);
@@ -28,33 +28,36 @@ export function StatsCards() {
     return { autoCount, bikeCount, peakHour, peakCount, hotspot, hotspotCount, dailyAvg, total: records.length };
   }, [records, filteredRecords]);
 
+  const mainAccent = dark ? 'text-[#e2e4e9]' : 'text-[#09090b]';
+  const mutedText = dark ? 'text-[#8a919e]' : 'text-[#52525b]';
+
   const cards = [
-    { label: 'Total', value: stats.total.toLocaleString(), icon: AlertTriangle, accent: 'text-cyan-400', bg: 'bg-cyan-500/10' },
-    { label: 'Auto', value: stats.autoCount.toLocaleString(), icon: Car, accent: 'text-[#ff6450]', bg: 'bg-[#ff6450]/10' },
-    { label: 'Bike', value: stats.bikeCount.toLocaleString(), icon: Bike, accent: 'text-[#3cb4f0]', bg: 'bg-[#3cb4f0]/10' },
-    { label: 'Peak Hour', value: `${String(stats.peakHour).padStart(2, '0')}:00`, icon: Clock, accent: 'text-teal-400', bg: 'bg-teal-500/10' },
-    { label: 'Daily Avg', value: stats.dailyAvg, icon: TrendingUp, accent: 'text-emerald-400', bg: 'bg-emerald-500/10' },
-    { label: 'Hotspot', value: stats.hotspot.length > 15 ? stats.hotspot.slice(0, 13) + '…' : stats.hotspot, icon: MapPin, accent: 'text-violet-400', bg: 'bg-violet-500/10' },
+    { label: 'TOTAL INGEST', value: stats.total.toLocaleString(), icon: Database, accent: mainAccent },
+    { label: 'AUTO (TARGET)', value: stats.autoCount.toLocaleString(), icon: Car, accent: 'text-[#eab308]' },
+    { label: 'BIKE (TARGET)', value: stats.bikeCount.toLocaleString(), icon: Bike, accent: 'text-[#3b82f6]' },
+    { label: 'PEAK ACTIVITY', value: `${String(stats.peakHour).padStart(2, '0')}:00`, icon: Clock, accent: mainAccent },
+    { label: 'RATE / DAY', value: stats.dailyAvg, icon: Activity, accent: mainAccent },
+    { label: 'PRIORITY SECTOR', value: stats.hotspot.length > 15 ? stats.hotspot.slice(0, 13) + '…' : stats.hotspot, icon: Crosshair, accent: 'text-[#ef4444]' },
   ];
 
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 font-mono uppercase">
       {cards.map((card) => (
         <div
           key={card.label}
-          className={`backdrop-blur border rounded-xl p-3 transition-all group ${
+          className={`border p-3 flex flex-col justify-between transition-none ${
             dark
-              ? 'bg-[#0a1628]/60 border-[#112a4a] hover:border-[#1e508c]/50'
-              : 'bg-white/80 border-[#d0daea] hover:border-[#8aa8c8]'
+              ? 'bg-[#090a0c] border-[#22262f] hover:bg-[#111318]'
+              : 'bg-white border-[#e4e4e7] hover:bg-[#f4f4f5]'
           }`}
         >
-          <div className="mb-2">
-            <div className={`w-8 h-8 rounded-lg ${card.bg} flex items-center justify-center group-hover:scale-110 transition-transform`}>
-              <card.icon className={`w-4 h-4 ${card.accent}`} />
-            </div>
+          <div className="flex items-start justify-between mb-4">
+            <span className={`text-[10px] tracking-widest ${mutedText} max-w-[70%]`}>{card.label}</span>
+            <card.icon className={`w-3.5 h-3.5 ${card.accent}`} />
           </div>
-          <div className={`text-lg font-bold leading-tight ${dark ? 'text-white' : 'text-[#0a1628]'}`}>{card.value}</div>
-          <div className={`text-[10px] mt-0.5 ${dark ? 'text-blue-300/50' : 'text-[#5a7a9a]'}`}>{card.label}</div>
+          <div className={`text-xl font-bold tracking-tight ${dark ? 'text-white' : 'text-[#09090b]'}`}>
+            {card.value}
+          </div>
         </div>
       ))}
     </div>
