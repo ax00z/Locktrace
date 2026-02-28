@@ -1,4 +1,4 @@
-# Toronto Asset Safety Radar v2
+# Locktrace
 
 A real-time theft analytics dashboard for the City of Toronto, built on publicly available Toronto Police Service data. The application visualises auto and bicycle theft incidents from the past three months on an interactive map, supported by statistical breakdowns and filterable tables.
 
@@ -29,8 +29,8 @@ There is no database, no backend server, and no runtime API dependency once the 
 ### 1. Clone the repository
 
 ```
-git clone https://github.com/ax00z/Asset-Radar.git
-cd toronto-radar
+git clone https://github.com/ax00z/loctrace.git
+cd locktrace
 ```
 
 ### 2. Scrape data
@@ -68,7 +68,7 @@ Output goes to `dist/`. The build inlines all assets into a single HTML file via
 ## Project Structure
 
 ```
-toronto-radar/
+locktrace/
 ├── .github/
 │   └── workflows/
 │       └── daily.yml            # Scheduled scrape + deploy
