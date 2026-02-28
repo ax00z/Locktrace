@@ -1,4 +1,4 @@
-import { useRef, useEffect, useState, useCallback } from 'react';
+import { useRef, useEffect, useState, useCallback, useMemo } from 'react';
 import { useStore } from '../store/useStore';
 import type { TheftRecord } from '../types';
 import { ZoomIn, ZoomOut, RotateCcw, Crosshair } from 'lucide-react';
@@ -28,7 +28,12 @@ export function TheftMap() {
   const containerRef = useRef<HTMLDivElement>(null);
   const frameRef = useRef(0);
   const { viewMode, selectedRecord, setSelectedRecord, theme } = useStore();
-  const filteredRecords = useStore((s) => s.filteredRecords());
+  const records = useStore((s) => s.records);
+  const filter = useStore((s) => s.filter);
+  const filteredRecords = useMemo(
+    () => (filter === 'all' ? records : records.filter((r) => r.type === filter)),
+    [records, filter]
+  );
   const dark = theme === 'dark';
 
   const [map, setMap] = useState<MapState>({ centerLat: CENTER.lat, centerLng: CENTER.lng, zoom: 2.5 });

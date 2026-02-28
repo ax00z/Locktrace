@@ -4,8 +4,12 @@ import { Car, Bike, Activity, Clock, Crosshair, Database } from 'lucide-react';
 
 export function StatsCards() {
   const records = useStore((s) => s.records);
-  const filteredRecords = useStore((s) => s.filteredRecords());
+  const filter = useStore((s) => s.filter);
   const dark = useStore((s) => s.theme === 'dark');
+  const filteredRecords = useMemo(
+    () => (filter === 'all' ? records : records.filter((r) => r.type === filter)),
+    [records, filter]
+  );
 
   const stats = useMemo(() => {
     const autoCount = records.filter((r) => r.type === 'auto').length;

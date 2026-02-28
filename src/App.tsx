@@ -197,7 +197,12 @@ function LiveTestPanel({ dark, status, message, onTest }: { dark: boolean; statu
 }
 
 function TimeDistribution({ dark }: { dark: boolean }) {
-  const filteredRecords = useStore((s) => s.filteredRecords());
+  const records = useStore((s) => s.records);
+  const filter = useStore((s) => s.filter);
+  const filteredRecords = useMemo(
+    () => (filter === 'all' ? records : records.filter((r) => r.type === filter)),
+    [records, filter]
+  );
   const total = Math.max(filteredRecords.length, 1);
 
   const card = dark ? 'bg-[#0a1628]/60 border-[#112a4a]' : 'bg-white/80 border-[#d0daea]';

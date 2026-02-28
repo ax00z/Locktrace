@@ -10,23 +10,15 @@ const AUTO_COLOR = '#eab308';
 const BIKE_COLOR = '#3b82f6';
 const PIE_COLORS = ['#3b82f6', '#eab308', '#ef4444', '#10b981', '#8b5cf6', '#64748b'];
 
-function getLast6Months(): { key: string; label: string }[] {
-  const result: { key: string; label: string }[] = [];
-  const now = new Date();
-  const names = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
-  for (let i = 5; i >= 0; i--) {
-    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-    result.push({
-      key: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`,
-      label: `${names[d.getMonth()]} '${String(d.getFullYear()).slice(2)}`,
-    });
-  }
-  return result;
-}
-
 export function Charts() {
-  const filteredRecords = useStore((s) => s.filteredRecords());
+  const allRecords = useStore((s) => s.records);
+  const filter = useStore((s) => s.filter);
   const dark = useStore((s) => s.theme === 'dark');
+
+  const filteredRecords = useMemo(
+    () => (filter === 'all' ? allRecords : allRecords.filter((r) => r.type === filter)),
+    [allRecords, filter]
+  );
 
   const hourlyData = useMemo(() => {
     const counts = Array.from({ length: 24 }, (_, i) => ({
@@ -37,7 +29,24 @@ export function Charts() {
   }, [filteredRecords]);
 
   const monthlyData = useMemo(() => {
-    const months = getLast6Months();
+    const MONTH_NAMES = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
+    let anchorYear = new Date().getFullYear();
+    let anchorMonth = new Date().getMonth() + 1;
+    if (allRecords.length > 0) {
+      const maxYM = allRecords.reduce((max, r) => Math.max(max, r.year * 100 + r.month), 0);
+      anchorYear = Math.floor(maxYM / 100);
+      anchorMonth = maxYM % 100;
+    }
+    const months: { key: string; label: string }[] = [];
+    for (let i = 5; i >= 0; i--) {
+      let m = anchorMonth - i;
+      let y = anchorYear;
+      while (m <= 0) { m += 12; y--; }
+      months.push({
+        key: `${y}-${String(m).padStart(2, '0')}`,
+        label: `${MONTH_NAMES[m - 1]} '${String(y).slice(2)}`,
+      });
+    }
     const map = new Map<string, { auto: number; bike: number }>();
     months.forEach((m) => map.set(m.key, { auto: 0, bike: 0 }));
     filteredRecords.forEach((r) => {
@@ -46,7 +55,7 @@ export function Charts() {
       if (entry) entry[r.type]++;
     });
     return months.map((m) => ({ month: m.label, auto: map.get(m.key)?.auto || 0, bike: map.get(m.key)?.bike || 0 }));
-  }, [filteredRecords]);
+  }, [filteredRecords, allRecords]);
 
   const topNeighbourhoods = useMemo(() => {
     const map = new Map<string, { auto: number; bike: number }>();

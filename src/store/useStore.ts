@@ -35,7 +35,7 @@ export const useStore = create<AppState>((set, get) => ({
   records: [],
   loading: true,
   error: null,
-  viewMode: 'heatmap',
+  viewMode: 'scatter',
   filter: 'all',
   selectedRecord: null,
   dataSource: null,

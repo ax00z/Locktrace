@@ -1,14 +1,22 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { useStore } from '../store/useStore';
 import { List, ChevronLeft, ChevronRight } from 'lucide-react';
 
 const PER_PAGE = 10;
 
 export function RecentIncidents() {
-  const filteredRecords = useStore((s) => s.filteredRecords());
+  const records = useStore((s) => s.records);
+  const filter = useStore((s) => s.filter);
   const setSelectedRecord = useStore((s) => s.setSelectedRecord);
   const dark = useStore((s) => s.theme === 'dark');
   const [page, setPage] = useState(0);
+
+  const filteredRecords = useMemo(
+    () => (filter === 'all' ? records : records.filter((r) => r.type === filter)),
+    [records, filter]
+  );
+
+  useEffect(() => { setPage(0); }, [filter]);
 
   const sorted = useMemo(
     () => [...filteredRecords].sort((a, b) =>
