@@ -2,8 +2,8 @@
 import json
 import os
 import time
-import urllib.request
 import urllib.parse
+import urllib.request
 from datetime import datetime, timedelta
 
 LIVE_API = (
@@ -27,14 +27,16 @@ def fetch_features(url, where="1=1", page_size=2000):
     all_features = []
     offset = 0
     while True:
-        params = urllib.parse.urlencode({
-            "where": where,
-            "outFields": "*",
-            "outSR": "4326",
-            "f": "json",
-            "resultRecordCount": str(page_size),
-            "resultOffset": str(offset),
-        })
+        params = urllib.parse.urlencode(
+            {
+                "where": where,
+                "outFields": "*",
+                "outSR": "4326",
+                "f": "json",
+                "resultRecordCount": str(page_size),
+                "resultOffset": str(offset),
+            }
+        )
         try:
             req = urllib.request.Request(
                 f"{url}?{params}",
@@ -54,8 +56,8 @@ def fetch_features(url, where="1=1", page_size=2000):
                 break
             if offset >= page_size * 50:
                 break
-        except Exception as e:
-            print(f"  Fetch error {url}: {e}")
+        except Exception as exc:
+            print(f"  Fetch error {url}: {exc}")
             break
     return all_features
 
@@ -74,15 +76,18 @@ def parse_record(feature, explicit_type=None):
         return None
 
     call_type = str(
-        attr.get("TYPE") or attr.get("EVENT_TYPE") or
-        attr.get("CALL_TYPE") or attr.get("PREMISES_TYPE") or ""
+        attr.get("TYPE")
+        or attr.get("EVENT_TYPE")
+        or attr.get("CALL_TYPE")
+        or attr.get("PREMISES_TYPE")
+        or ""
     ).upper()
 
     if explicit_type:
         theft_type = explicit_type
     else:
-        is_auto = any(k in call_type for k in ["AUTO", "VEHICLE", "CAR"])
-        is_bike = any(k in call_type for k in ["BIKE", "BICYCLE"])
+        is_auto = any(key in call_type for key in ["AUTO", "VEHICLE", "CAR"])
+        is_bike = any(key in call_type for key in ["BIKE", "BICYCLE"])
         if is_auto:
             theft_type = "auto"
         elif is_bike:
@@ -91,8 +96,10 @@ def parse_record(feature, explicit_type=None):
             return None
 
     raw_date = (
-        attr.get("OCC_DATE") or attr.get("REPORT_DATE") or
-        attr.get("DATE") or int(time.time() * 1000)
+        attr.get("OCC_DATE")
+        or attr.get("REPORT_DATE")
+        or attr.get("DATE")
+        or int(time.time() * 1000)
     )
     if isinstance(raw_date, (int, float)) and raw_date > 1_000_000_000:
         dt = datetime.fromtimestamp(raw_date / 1000.0)
@@ -104,7 +111,11 @@ def parse_record(feature, explicit_type=None):
     else:
         dt = datetime.now()
 
-    obj_id = attr.get("EVENT_UNIQUE_ID") or attr.get("OBJECTID") or f"{theft_type}-{int(time.time()*1000)}"
+    obj_id = (
+        attr.get("EVENT_UNIQUE_ID")
+        or attr.get("OBJECTID")
+        or f"{theft_type}-{int(time.time() * 1000)}"
+    )
 
     return {
         "id": f"{theft_type}-{obj_id}",
@@ -115,70 +126,83 @@ def parse_record(feature, explicit_type=None):
         "day": dt.day,
         "hour": dt.hour,
         "neighbourhood": str(
-            attr.get("NEIGHBOURHOOD_158") or attr.get("NEIGHBOURHOOD_140") or
-            attr.get("HOOD_158") or attr.get("DIVISION") or "Unknown"
+            attr.get("NEIGHBOURHOOD_158")
+            or attr.get("NEIGHBOURHOOD_140")
+            or attr.get("HOOD_158")
+            or attr.get("DIVISION")
+            or "Unknown"
         ).strip(),
         "premiseType": str(
-            attr.get("PREMISES_TYPE") or attr.get("PREMISE_TYPE") or call_type or "Unknown"
+            attr.get("PREMISES_TYPE")
+            or attr.get("PREMISE_TYPE")
+            or call_type
+            or "Unknown"
         ).strip(),
         "lat": round(lat, 6),
         "lng": round(lng, 6),
-        "status": "ACTIVE DISPATCH" if not explicit_type else str(attr.get("STATUS") or "Unknown").strip(),
+        "status": "ACTIVE DISPATCH"
+        if not explicit_type
+        else str(attr.get("STATUS") or "Unknown").strip(),
     }
 
 
 def main():
-    print(f"Locktrace Ingestion — {datetime.now().strftime('%Y-%m-%d %H:%M')}")
+    print(f"Locktrace Ingestion - {datetime.now().strftime('%Y-%m-%d %H:%M')}")
     new_records = []
+    existing_records = []
 
     live_features = fetch_features(LIVE_API)
     if live_features:
         print(f"Live feed online: {len(live_features)} dispatches")
-        for f in live_features:
-            rec = parse_record(f)
-            if rec:
-                new_records.append(rec)
+        for feature in live_features:
+            record = parse_record(feature)
+            if record:
+                new_records.append(record)
     else:
-        print("Live feed restricted — falling back to historical datasets")
+        print("Live feed restricted - falling back to historical datasets")
         year = datetime.now().year
-        # OCC_YEAR is a string field in the ArcGIS schema — quotes required
-        for f in fetch_features(AUTO_API, f"OCC_YEAR >= '{year - 1}'"):
-            rec = parse_record(f, "auto")
-            if rec:
-                new_records.append(rec)
-        for f in fetch_features(BIKE_API, f"OCC_YEAR >= '{year - 1}'"):
-            rec = parse_record(f, "bike")
-            if rec:
-                new_records.append(rec)
+        # OCC_YEAR is a string field in the ArcGIS schema; quotes are required.
+        for feature in fetch_features(AUTO_API, f"OCC_YEAR >= '{year - 1}'"):
+            record = parse_record(feature, "auto")
+            if record:
+                new_records.append(record)
+        for feature in fetch_features(BIKE_API, f"OCC_YEAR >= '{year - 1}'"):
+            record = parse_record(feature, "bike")
+            if record:
+                new_records.append(record)
 
     print(f"Extracted {len(new_records)} targets")
 
     history = {}
     if os.path.exists(DATA_FILE):
         try:
-            with open(DATA_FILE, "r", encoding="utf-8") as fh:
-                for r in json.load(fh):
-                    history[r["id"]] = r
-        except Exception as e:
-            print(f"  Could not load existing database: {e}")
+            with open(DATA_FILE, "r", encoding="utf-8") as file_handle:
+                existing_records = json.load(file_handle)
+                for record in existing_records:
+                    history[record["id"]] = record
+        except Exception as exc:
+            print(f"  Could not load existing database: {exc}")
 
-    for r in new_records:
-        history[r["id"]] = r
+    for record in new_records:
+        history[record["id"]] = record
 
     cutoff_str = (datetime.now() - timedelta(days=MAX_HISTORY_DAYS)).strftime("%Y-%m-%d")
-    final_list = [r for r in history.values() if r["date"] >= cutoff_str]
-    final_list.sort(key=lambda x: (x["date"], x["hour"]), reverse=True)
+    final_list = [record for record in history.values() if record["date"] >= cutoff_str]
+    final_list.sort(key=lambda value: (value["date"], value["hour"]), reverse=True)
 
-    os.makedirs(os.path.dirname(DATA_FILE), exist_ok=True)
-    with open(DATA_FILE, "w", encoding="utf-8") as fh:
-        json.dump(final_list, fh, ensure_ascii=False, separators=(",", ":"))
-
-    print(f"Database updated: {len(final_list)} records")
+    if not final_list and existing_records:
+        print("No fresh records in retention window - preserving existing dataset")
+        final_list = existing_records
 
     if not final_list:
-        print("Warning: zero records — API may be down")
-        import sys
-        sys.exit(1)
+        print("Warning: no records available - leaving database unchanged")
+        return
+
+    os.makedirs(os.path.dirname(DATA_FILE), exist_ok=True)
+    with open(DATA_FILE, "w", encoding="utf-8") as file_handle:
+        json.dump(final_list, file_handle, ensure_ascii=False, separators=(",", ":"))
+
+    print(f"Database updated: {len(final_list)} records")
 
 
 if __name__ == "__main__":

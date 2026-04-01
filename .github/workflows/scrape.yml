@@ -1,10 +1,14 @@
-name: Hourly Ingestion Pipeline
+name: Locktrace Ingestion Pipeline
 on:
-  schedule:
-    - cron: '0 * * * *'
   workflow_dispatch:
+  repository_dispatch:
+    types:
+      - locktrace_visit
 permissions:
   contents: write
+concurrency:
+  group: locktrace-ingest
+  cancel-in-progress: true
 jobs:
   ingest:
     runs-on: ubuntu-latest
