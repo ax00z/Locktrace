@@ -23,6 +23,44 @@ DATA_FILE = "public/data/locktrace_live.json"
 MAX_HISTORY_DAYS = 90
 
 
+def parse_event_datetime(raw_date):
+    now = datetime.now()
+
+    if raw_date is None:
+        return now
+
+    if isinstance(raw_date, str):
+        text = raw_date.strip()
+        if text.isdigit():
+            raw_date = int(text)
+        else:
+            try:
+                return datetime.fromisoformat(text.replace("Z", "+00:00"))
+            except Exception:
+                return now
+
+    if isinstance(raw_date, (int, float)):
+        ts = float(raw_date)
+        abs_ts = abs(ts)
+
+        # Handle ArcGIS timestamps that may be in ms/us/ns as well as seconds.
+        if abs_ts >= 1e18:
+            ts /= 1_000_000_000
+        elif abs_ts >= 1e15:
+            ts /= 1_000_000
+        elif abs_ts >= 1e12:
+            ts /= 1_000
+
+        try:
+            dt = datetime.fromtimestamp(ts)
+            if 2000 <= dt.year <= 2100:
+                return dt
+        except Exception:
+            return now
+
+    return now
+
+
 def fetch_features(url, where="1=1", page_size=2000):
     all_features = []
     offset = 0
@@ -95,21 +133,8 @@ def parse_record(feature, explicit_type=None):
         else:
             return None
 
-    raw_date = (
-        attr.get("OCC_DATE")
-        or attr.get("REPORT_DATE")
-        or attr.get("DATE")
-        or int(time.time() * 1000)
-    )
-    if isinstance(raw_date, (int, float)) and raw_date > 1_000_000_000:
-        dt = datetime.fromtimestamp(raw_date / 1000.0)
-    elif isinstance(raw_date, str) and len(raw_date) >= 10:
-        try:
-            dt = datetime.fromisoformat(raw_date.replace("Z", "+00:00"))
-        except Exception:
-            dt = datetime.now()
-    else:
-        dt = datetime.now()
+    raw_date = attr.get("OCC_DATE") or attr.get("REPORT_DATE") or attr.get("DATE")
+    dt = parse_event_datetime(raw_date)
 
     obj_id = (
         attr.get("EVENT_UNIQUE_ID")

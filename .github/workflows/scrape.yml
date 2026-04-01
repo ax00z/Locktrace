@@ -1,12 +1,3 @@
-name: Hourly Ingestion Pipeline
-on:
-  schedule:
-    - cron: '0 * * * *'
-  workflow_dispatch:
-permissions:
-  contents: write
-jobs:
-  ingest:
 name: Locktrace Ingestion Pipeline
 on:
   workflow_dispatch:
@@ -23,3 +14,15 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Execute Scraper
+        run: python scrape.py
+      - name: Commit and Push Database
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add public/data/locktrace_live.json
+          git commit -m "data: hourly tactical update" || exit 0
+          git push
