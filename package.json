@@ -1,20 +1,18 @@
 {
-  "name": "react-vite-tailwind",
+  "name": "locktrace",
   "private": true,
   "version": "0.0.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "tsc --noEmit && vite build",
     "preview": "vite preview"
   },
   "dependencies": {
-    "clsx": "2.1.1",
     "lucide-react": "^0.563.0",
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "recharts": "^3.7.0",
-    "tailwind-merge": "3.4.0",
     "zustand": "^5.0.11"
   },
   "devDependencies": {

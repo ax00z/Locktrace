@@ -234,11 +234,17 @@ export function TheftMap() {
     setSelectedRecord(null);
   };
 
-  const onWheel = (e: React.WheelEvent) => {
-    e.preventDefault();
-    const d = e.deltaY > 0 ? -0.2 : 0.2;
-    setMap((p) => ({ ...p, zoom: Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, p.zoom + d * p.zoom * 0.15)) }));
-  };
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const handler = (e: WheelEvent) => {
+      e.preventDefault();
+      const d = e.deltaY > 0 ? -0.2 : 0.2;
+      setMap((p) => ({ ...p, zoom: Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, p.zoom + d * p.zoom * 0.15)) }));
+    };
+    canvas.addEventListener('wheel', handler, { passive: false });
+    return () => canvas.removeEventListener('wheel', handler);
+  }, []);
 
   const btnClass = `w-8 h-8 flex items-center justify-center transition-none border ${
     dark
@@ -262,7 +268,6 @@ export function TheftMap() {
         onMouseUp={onMouseUp}
         onMouseLeave={onMouseLeave}
         onClick={onClick}
-        onWheel={onWheel}
         style={{ imageRendering: 'pixelated' }}
       />
 

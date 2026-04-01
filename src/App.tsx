@@ -56,7 +56,7 @@ export function App() {
       setLoadingMsg('Loading demo data...');
       await new Promise((r) => setTimeout(r, 300));
       setRecords(getDemoData());
-      setDataSource('live');
+      setDataSource('static');
       setLastUpdated(new Date().toISOString());
       setIsDemo(true);
       setLoading(false);
@@ -149,7 +149,7 @@ function StatusPanel({ dark, isDemo, autoCount, bikeCount }: { dark: boolean; is
         </div>
         <div className="flex items-center justify-between">
           <span className={`text-[10px] ${muted}`}>Window</span>
-          <span className={`text-[10px] font-mono ${secondary}`}>6 months</span>
+          <span className={`text-[10px] font-mono ${secondary}`}>90 days</span>
         </div>
       </div>
     </div>
